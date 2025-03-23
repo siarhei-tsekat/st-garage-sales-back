@@ -10,8 +10,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "garage_roles")
-public class Role {
+@Table(name = "auth_roles")
+public class AuthRole {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,16 +20,16 @@ public class Role {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, name = "role")
-    private AppRole roleName;
+    private RoleName roleName;
 
-    public Role() {
+    public AuthRole() {
     }
 
-    public Role(AppRole roleName) {
+    public AuthRole(RoleName roleName) {
         this.roleName = roleName;
     }
 
-    public Role(Integer roleId, AppRole roleName) {
+    public AuthRole(Integer roleId, RoleName roleName) {
         this.roleId = roleId;
         this.roleName = roleName;
     }
@@ -42,11 +42,11 @@ public class Role {
         this.roleId = roleId;
     }
 
-    public AppRole getRoleName() {
+    public RoleName getRoleName() {
         return roleName;
     }
 
-    public void setRoleName(AppRole roleName) {
+    public void setRoleName(RoleName roleName) {
         this.roleName = roleName;
     }
 }

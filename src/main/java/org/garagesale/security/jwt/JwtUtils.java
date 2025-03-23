@@ -8,7 +8,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import org.garagesale.security.GarageSaleUserDetails;
+import org.garagesale.security.AuthUserDetails;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.WebUtils;
@@ -76,7 +76,7 @@ public class JwtUtils {
                 .getPayload().getSubject();
     }
 
-    public String generateTokenFromUsername(GarageSaleUserDetails userDetails) {
+    public String generateTokenFromUsername(AuthUserDetails userDetails) {
         String username = userDetails.getUsername();
         return Jwts.builder()
                 .subject(username)

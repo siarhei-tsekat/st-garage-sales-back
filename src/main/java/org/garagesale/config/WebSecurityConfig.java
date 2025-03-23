@@ -1,9 +1,9 @@
 package org.garagesale.config;
 
 import org.garagesale.repository.RoleRepository;
-import org.garagesale.security.AppRole;
-import org.garagesale.security.GarageSaleUserDetailsService;
-import org.garagesale.security.Role;
+import org.garagesale.security.RoleName;
+import org.garagesale.security.AuthUserDetailsService;
+import org.garagesale.security.AuthRole;
 import org.garagesale.security.jwt.AuthEntryPointJwt;
 import org.garagesale.security.jwt.AuthTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +27,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class WebSecurityConfig {
 
     @Autowired
-    public GarageSaleUserDetailsService userDetailsService;
+    public AuthUserDetailsService userDetailsService;
 
     @Autowired
     public AuthEntryPointJwt unauthorizedHandler;
@@ -49,6 +49,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers("/images/**").permitAll()
                         .anyRequest().authenticated());
 
         http.authenticationProvider(authenticationProvider());
@@ -81,9 +82,9 @@ public class WebSecurityConfig {
     @Bean
     public CommandLineRunner initData(RoleRepository roleRepository) {
         return args -> {
-            roleRepository.findByRoleName(AppRole.ROLE_USER).orElseGet(() -> {
-                Role role = new Role(AppRole.ROLE_USER);
-                return roleRepository.save(role);
+            roleRepository.findByRoleName(RoleName.ROLE_USER).orElseGet(() -> {
+                AuthRole authRole = new AuthRole(RoleName.ROLE_USER);
+                return roleRepository.save(authRole);
             });
         };
     }

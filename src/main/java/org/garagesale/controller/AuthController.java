@@ -1,14 +1,16 @@
 package org.garagesale.controller;
 
 import jakarta.validation.Valid;
-import org.garagesale.payload.MessageResponse;
-import org.garagesale.repository.GarageSaleUserRepository;
+import org.garagesale.model.AppUser;
+import org.garagesale.payload.ApiResponse;
+import org.garagesale.repository.AppUserRepository;
+import org.garagesale.repository.AuthUserRepository;
 import org.garagesale.repository.RoleRepository;
-import org.garagesale.security.AppRole;
-import org.garagesale.security.GarageSaleUser;
-import org.garagesale.security.GarageSaleUserDetails;
+import org.garagesale.security.AuthRole;
+import org.garagesale.security.AuthUser;
+import org.garagesale.security.AuthUserDetails;
 import org.garagesale.security.LoginRequest;
-import org.garagesale.security.Role;
+import org.garagesale.security.RoleName;
 import org.garagesale.security.SignupRequest;
 import org.garagesale.security.UserInfoResponse;
 import org.garagesale.security.jwt.JwtUtils;
@@ -26,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,7 +44,7 @@ public class AuthController {
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    private GarageSaleUserRepository userRepository;
+    private AuthUserRepository userRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -51,33 +52,43 @@ public class AuthController {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired
+    private AppUserRepository appUserRepository;
+
+
     @PostMapping("/signup")
-    public ResponseEntity<?> register(@Valid @RequestBody SignupRequest signupRequest) {
+    public ResponseEntity<ApiResponse<?>> register(@Valid @RequestBody SignupRequest signupRequest) {
 
         if (userRepository.existsByUserName(signupRequest.getUsername())) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Username is already taken"));
+            return ResponseEntity.badRequest().body(ApiResponse.withError("Error: Username is already taken"));
         }
 
         if (userRepository.existsByEmail(signupRequest.getEmail())) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already taken"));
+            return ResponseEntity.badRequest().body(ApiResponse.withError("Error: Email is already taken"));
         }
 
+        AuthUser user = new AuthUser(signupRequest.getUsername(), signupRequest.getEmail(), passwordEncoder.encode(signupRequest.getPassword()));
 
-        GarageSaleUser user = new GarageSaleUser(signupRequest.getUsername(), signupRequest.getEmail(), passwordEncoder.encode(signupRequest.getPassword()));
-
-        Role role = roleRepository.findByRoleName(AppRole.ROLE_USER).orElseThrow(() -> new RuntimeException("Error: Role nor found"));
-        Set<Role> roles = new HashSet<>();
-        roles.add(role);
-        user.setRoles(roles);
+        AuthRole authRole = roleRepository.findByRoleName(RoleName.ROLE_USER).orElseThrow(() -> new RuntimeException("Error: Role nor found"));
+        Set<AuthRole> authRoles = new HashSet<>();
+        authRoles.add(authRole);
+        user.setRoles(authRoles);
 
         userRepository.save(user);
 
-        return ResponseEntity.ok(new MessageResponse("User registered successfully"));
+        AppUser appUser = new AppUser();
+        appUser.setAppUserId(user.getUserId());
+        appUser.setUserName(user.getUserName());
+        appUser.setEmail(user.getEmail());
+
+        appUserRepository.save(appUser);
+
+        return ResponseEntity.ok(ApiResponse.withPayload("User registered successfully"));
 
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<ApiResponse<?>> authenticateUser(@RequestBody LoginRequest loginRequest) {
         Authentication authentication;
 
         try {
@@ -85,15 +96,12 @@ public class AuthController {
             authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
         } catch (AuthenticationException e) {
-            HashMap<String, Object> map = new HashMap<>();
-            map.put("message", "Bad credentials");
-            map.put("state", false);
-            return new ResponseEntity<>(map, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiResponse.withError("Bad credentials"), HttpStatus.NOT_FOUND);
         }
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        GarageSaleUserDetails userDetails = (GarageSaleUserDetails) authentication.getPrincipal();
+        AuthUserDetails userDetails = (AuthUserDetails) authentication.getPrincipal();
 
         String jwtToken = jwtUtils.generateTokenFromUsername(userDetails);
 
@@ -103,7 +111,7 @@ public class AuthController {
 
         UserInfoResponse userInfoResponse = new UserInfoResponse(userDetails.getId(), jwtToken, userDetails.getUsername(), roles);
 
-        return new ResponseEntity<>(userInfoResponse, HttpStatus.OK);
+        return new ResponseEntity<>(ApiResponse.withPayload(userInfoResponse), HttpStatus.OK);
 
     }
 }

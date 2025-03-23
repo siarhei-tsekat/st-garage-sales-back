@@ -1,5 +1,6 @@
 package org.garagesale.exception;
 
+import org.garagesale.payload.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -15,7 +16,7 @@ import java.util.Optional;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> methodArgumentNotValidException(MethodArgumentNotValidException e) {
+    public ResponseEntity<ApiResponse<?>> methodArgumentNotValidException(MethodArgumentNotValidException e) {
 
         Optional<ObjectError> objectError = e.getBindingResult().getAllErrors().stream().findFirst();
 
@@ -28,12 +29,23 @@ public class GlobalExceptionHandler {
             details = fieldName + " : " + message;
         }
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
+        Error error = new Error(
                 "Not valid request",
                 details
         );
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(ApiResponse.withError(error), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> resourceNotFoundException(ResourceNotFoundException e) {
+        String message = e.getMessage();
+        return new ResponseEntity<>(ApiResponse.withError(message), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<ApiResponse<?>> apiException(ApiException e) {
+        String message = e.getMessage();
+        return new ResponseEntity<>(ApiResponse.withError(message), HttpStatus.NOT_FOUND);
     }
 }

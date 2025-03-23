@@ -1,28 +1,15 @@
 package org.garagesale.exception;
 
-import java.time.LocalDateTime;
-
-public class ErrorResponse {
-    private LocalDateTime timestamp;
+public class Error {
     private String message;
     private String details;
 
-    public ErrorResponse() {
+    public Error() {
     }
 
-    public ErrorResponse(LocalDateTime timestamp, String message, String details) {
-        this.timestamp = timestamp;
+    public Error(String message, String details) {
         this.message = message;
         this.details = details;
-    }
-
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
     }
 
     public String getMessage() {

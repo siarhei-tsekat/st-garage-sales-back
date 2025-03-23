@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class GarageSaleUserDetails implements UserDetails {
+public class AuthUserDetails implements UserDetails {
 
     private static final long serialVersionID = 1L;
 
@@ -26,10 +26,10 @@ public class GarageSaleUserDetails implements UserDetails {
     private Collection<? extends GrantedAuthority> authorities;
 
 
-    public GarageSaleUserDetails() {
+    public AuthUserDetails() {
     }
 
-    public GarageSaleUserDetails(Long id, String username, String email, String password, Collection<? extends GrantedAuthority> authorities) {
+    public AuthUserDetails(Long id, String username, String email, String password, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.username = username;
         this.email = email;
@@ -38,9 +38,9 @@ public class GarageSaleUserDetails implements UserDetails {
     }
 
 
-    public static GarageSaleUserDetails build(GarageSaleUser user) {
+    public static AuthUserDetails build(AuthUser user) {
         List<SimpleGrantedAuthority> grantedAuthorities = user.getRoles().stream().map(role -> new SimpleGrantedAuthority(role.getRoleName().name())).collect(Collectors.toList());
-        return new GarageSaleUserDetails(user.getUserId(), user.getUserName(), user.getEmail(), user.getPassword(), grantedAuthorities);
+        return new AuthUserDetails(user.getUserId(), user.getUserName(), user.getEmail(), user.getPassword(), grantedAuthorities);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class GarageSaleUserDetails implements UserDetails {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        GarageSaleUserDetails that = (GarageSaleUserDetails) o;
+        AuthUserDetails that = (AuthUserDetails) o;
         return Objects.equals(id, that.id);
     }
 
