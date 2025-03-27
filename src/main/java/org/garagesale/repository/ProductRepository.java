@@ -6,10 +6,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p WHERE p.appUser.appUserId = ?1")
     List<Product> findProductsByAppUserId(Long userId);
+
+    @Query("SELECT p FROM Product p WHERE p.appUser.appUserId = ?1 AND p.productId = ?2")
+    Optional<Product> findProductByAppUserIdAndProductId(Long userId, Long productId);
 }

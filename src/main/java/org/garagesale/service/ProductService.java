@@ -177,4 +177,16 @@ public class ProductService {
         return productResponse;
 
     }
+
+    public ProductDTO deleteProduct(Long productId) {
+        AuthUser authUser = authUtil.loggedInUser();
+
+        Product product = productRepository.findProductByAppUserIdAndProductId(authUser.getUserId(), productId).orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
+
+        //imageRepository.
+
+        productRepository.delete(product);
+
+        return modelMapper.map(product, ProductDTO.class);
+    }
 }
