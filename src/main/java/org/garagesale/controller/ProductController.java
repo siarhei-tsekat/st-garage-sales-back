@@ -9,6 +9,7 @@ import org.garagesale.payload.ApiResponse;
 import org.garagesale.payload.ImageDTO;
 import org.garagesale.payload.ProductDTO;
 import org.garagesale.payload.ProductResponse;
+import org.garagesale.payload.ProductUpdateDTO;
 import org.garagesale.security.jwt.JwtUtils;
 import org.garagesale.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -69,9 +71,14 @@ public class ProductController {
     }
 
     @GetMapping("/me/products")
-    public ResponseEntity<ApiResponse<ProductResponse>> getAllUserProducts() {
+    public ResponseEntity<ApiResponse<ProductResponse>> getAllUserProducts(
+            @RequestParam(value = "pageNumber", defaultValue = "0", required = false) Integer pageNumber,
+            @RequestParam(value = "pageSize", defaultValue = "10", required = false) Integer pageSize,
+            @RequestParam(value = "sortBy", defaultValue = "productId", required = false) String sortBy,
+            @RequestParam(value = "sortOrder", defaultValue = "asc", required = false) String sortOrder
+    ) {
 
-        ProductResponse productResponse = productService.getAllUserProducts();
+        ProductResponse productResponse = productService.getAllUserProducts(pageNumber, pageSize, sortBy, sortOrder);
 
         return new ResponseEntity<>(ApiResponse.withPayload(productResponse), HttpStatus.OK);
     }
@@ -82,6 +89,14 @@ public class ProductController {
         ProductDTO deletedProduct = productService.deleteProduct(productId);
 
         return new ResponseEntity<>(ApiResponse.withPayload(deletedProduct), HttpStatus.OK);
+    }
+
+    @PutMapping("/me/product/{productId}")
+    public ResponseEntity<ApiResponse<ProductDTO>> updateProduct(@RequestBody ProductUpdateDTO productUpdateDTO, @PathVariable Long productId) {
+
+        ProductDTO updatedProduct = productService.updateProduct(productId, productUpdateDTO);
+
+        return new ResponseEntity<>(ApiResponse.withPayload(updatedProduct), HttpStatus.OK);
     }
 
 }

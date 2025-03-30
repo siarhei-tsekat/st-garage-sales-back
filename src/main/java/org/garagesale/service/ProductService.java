@@ -11,6 +11,7 @@ import org.garagesale.model.Product;
 import org.garagesale.payload.ImageDTO;
 import org.garagesale.payload.ProductDTO;
 import org.garagesale.payload.ProductResponse;
+import org.garagesale.payload.ProductUpdateDTO;
 import org.garagesale.repository.AppUserRepository;
 import org.garagesale.repository.ImageRepository;
 import org.garagesale.repository.ProductRepository;
@@ -18,16 +19,18 @@ import org.garagesale.security.AuthUser;
 import org.garagesale.util.AuthUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
@@ -142,13 +145,17 @@ public class ProductService {
         }
     }
 
-    public ProductResponse getAllUserProducts() {
+    public ProductResponse getAllUserProducts(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+
         AuthUser authUser = authUtil.loggedInUser();
 
-        List<Product> userProducts = productRepository.findProductsByAppUserId(authUser.getUserId());
+        Sort sort = sortOrder.equals("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sort);
+
+        Page<Product> userProducts = productRepository.findProductsByAppUserId(authUser.getUserId(), pageDetails);
         List<ProductDTO> productDTOS = new ArrayList<>();
 
-        for (Product userProduct : userProducts) {
+        for (Product userProduct : userProducts.getContent()) {
 
             ProductDTO productDTO = new ProductDTO();
             productDTO.setQuantity(userProduct.getQuantity());
@@ -172,7 +179,13 @@ public class ProductService {
         }
 
         ProductResponse productResponse = new ProductResponse();
+
         productResponse.setProducts(productDTOS);
+        productResponse.setPageNumber(userProducts.getNumber());
+        productResponse.setPageSize(userProducts.getSize());
+        productResponse.setTotalElements(userProducts.getTotalElements());
+        productResponse.setTotalPages(userProducts.getTotalPages());
+        productResponse.setLastPage(userProducts.isLast());
 
         return productResponse;
 
@@ -188,5 +201,21 @@ public class ProductService {
         productRepository.delete(product);
 
         return modelMapper.map(product, ProductDTO.class);
+    }
+
+    public ProductDTO updateProduct(Long productId, ProductUpdateDTO productUpdateDTO) {
+        AuthUser authUser = authUtil.loggedInUser();
+
+        Product productFromDb = productRepository.findProductByAppUserIdAndProductId(authUser.getUserId(), productId).orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
+
+        Product product = modelMapper.map(productUpdateDTO, Product.class);
+
+        productFromDb.setProductName(product.getProductName());
+        productFromDb.setDescription(product.getDescription());
+        productFromDb.setPrice(product.getPrice());
+
+        productRepository.save(productFromDb);
+
+        return modelMapper.map(productFromDb, ProductDTO.class);
     }
 }
